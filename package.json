@@ -1,6 +1,6 @@
 {
     "name": "@types/roll20",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Roll20 type definition",
     "repository": {
         "type": "git",

@@ -1,7 +1,5 @@
-/// <reference path="node_modules/@types/underscore/index.d.ts" />
-/// <reference path="node_modules/@types/cheerio/index.d.ts" />
-
-declare const _: _.UnderscoreStatic;
+//// <reference path="node_modules/@types/underscore/index.d.ts" />
+//// <reference path="node_modules/@types/cheerio/index.d.ts" />
 declare const Cheerio: CheerioStatic;
 
 /**

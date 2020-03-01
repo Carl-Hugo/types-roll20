@@ -474,7 +474,11 @@ declare function sendChat(speakingAs: string, message: string, callback?: (opera
  */
 declare function Campaign(): Campaign;
 
-
+/**
+ * Returns true if the referenced player is a GM, else false.
+ * @param playerID The ID of a player.
+ */
+declare function playerIsGM(playerID: string): boolean;
 
 declare function randomInteger(max: number): number;
 

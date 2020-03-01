@@ -113,6 +113,20 @@ interface PlayerMutableSynchronousGetProperties {
 
 interface Player extends Roll20ObjectBase<PlayerImmutableSynchronousGetProperties, never, PlayerMutableSynchronousGetProperties, never> { }
 
+interface MacroImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
+    readonly _type: "macro";
+    readonly _playerid: string;
+}
+
+interface MacroMutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
+    name: string;
+    action: string;
+    visibleto: string;
+    istokenaction: boolean;
+}
+
+interface Macro extends Roll20ObjectBase<MacroImmutableSynchronousGetProperties, never, MacroMutableSynchronousGetProperties, never> { }
+
 interface TextImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
     readonly _type: "text";
     readonly _pageid: string;
@@ -368,12 +382,17 @@ interface CharacterChildObjectCreationProperties {
     _characterid: string;
 }
 
+interface MacroChildObjectCreationProperties {
+    _playerid: string;
+}
+
 type TextCreationProperties = PageChildObjectCreationProperties & Partial<TextMutableSynchronousGetProperties>;
 type GraphicCreationProperties = PageChildObjectCreationProperties & Partial<GraphicMutableSynchronousGetProperties>;
 type CharacterCreationProperties = Partial<CharacterMutableSynchronousGetProperties & CharacterMutableAsynchronousGetProperties>;
 type AttributeCreationProperties = CharacterChildObjectCreationProperties & Partial<AttributeMutableSynchronousGetProperties>;
 type AbilityCreationProperties = CharacterChildObjectCreationProperties & Partial<AbilityMutableSynchronousGetProperties>;
 type HandoutCreationProperties = Partial<HandoutMutableSynchronousGetProperties>;
+type MacroCreationProperties = MacroChildObjectCreationProperties & Partial<MacroMutableSynchronousGetProperties>;
 
 /**
  * Creates a new Roll20 object.
@@ -387,6 +406,7 @@ declare function createObj(type: "character", properties: CharacterCreationPrope
 declare function createObj(type: "attribute", properties: AttributeCreationProperties): Attribute | undefined;
 declare function createObj(type: "ability", properties: AbilityCreationProperties): Ability | undefined;
 declare function createObj(type: "handout", properties: HandoutCreationProperties): Handout | undefined;
+declare function createObj(type: "macro", properties: MacroCreationProperties): Macro | undefined;
 
 /**
  * Gets all Roll20 objects with properties that match a given set of properties.
@@ -418,6 +438,7 @@ declare function getObj(type: "character", id: string): Character | undefined;
 declare function getObj(type: "attribute", id: string): Attribute | undefined;
 declare function getObj(type: "ability", id: string): Ability | undefined;
 declare function getObj(type: "player", id: string): Player | undefined;
+declare function getObj(type: "macro", id: string): Macro | undefined;
 
 /**
  * Gets the value of an attribute, using the default value from the character sheet if the attribute is not present. value_type is an optional parameter, which you can use to specify "current" or "max".
@@ -474,7 +495,11 @@ declare function sendChat(speakingAs: string, message: string, callback?: (opera
  */
 declare function Campaign(): Campaign;
 
-
+/**
+ * Returns true if the referenced player is a GM, else false.
+ * @param playerID The ID of a player.
+ */
+declare function playerIsGM(playerID: string): boolean;
 
 declare function randomInteger(max: number): number;
 

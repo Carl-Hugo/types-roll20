@@ -7,7 +7,7 @@ declare const Cheerio: CheerioStatic;
  */
 declare const state: any;
 
-type ObjectType = "graphic" | "text" | "path" | "character" | "ability" | "attribute" | "handout" | "rollabletable" | "tableitem" | "macro" | "campaign" | "player";
+type ObjectType = "graphic" | "text" | "path" | "character" | "ability" | "attribute" | "handout" | "rollabletable" | "tableitem" | "macro" | "campaign" | "player" | "page";
 type RollType = "V" | "G" | "M" | "R" | "C";
 type RollResultType = "sum" | "success";
 type Layer = "gmlayer" | "objects" | "map" | "walls";
@@ -262,6 +262,37 @@ interface AbilityMutableSynchronousGetProperties {
 
 interface Ability extends Roll20ObjectBase<AbilityImmutableSynchronousGetProperties, never, AbilityMutableSynchronousGetProperties, never> { }
 
+interface PageImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
+    readonly _type: "page";
+    readonly _zorder: string;
+}
+
+interface PageMutableSynchronousGetProperties {
+    name: string;
+    showgrid: boolean;
+    showdarkness: boolean;
+    showlighting: boolean;
+    width: number;
+    height: number;
+    snapping_increment: number;
+    grid_opacity: number;
+    fog_opacity: number;
+    background_color: string;
+    gridcolor: string;
+    grid_type: "square" | "hex" | "hexr";
+    scale_number: number;
+    scale_units: string;
+    gridlabels: boolean;
+    diagonaltype: "foure" | "pythagorean" | "threefive" | "manhattan";
+    archived: boolean;
+    lightupdatedrop: boolean;
+    lightenforcelos: boolean;
+    lightrestrictmove: boolean;
+    lightglobalillum: boolean;
+}
+
+interface Page extends Roll20ObjectBase<PageImmutableSynchronousGetProperties, never, PageMutableSynchronousGetProperties, never> { }
+
 interface TurnOrdering {
     readonly id: string;
     readonly pr: number;
@@ -439,6 +470,7 @@ declare function getObj(type: "attribute", id: string): Attribute | undefined;
 declare function getObj(type: "ability", id: string): Ability | undefined;
 declare function getObj(type: "player", id: string): Player | undefined;
 declare function getObj(type: "macro", id: string): Macro | undefined;
+declare function getObj(type: "page", id: string): Page | undefined;
 
 /**
  * Gets the value of an attribute, using the default value from the character sheet if the attribute is not present. value_type is an optional parameter, which you can use to specify "current" or "max".

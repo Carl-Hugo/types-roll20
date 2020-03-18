@@ -24,7 +24,6 @@
     },
     "homepage": "https://github.com/Carl-Hugo/types-roll20#readme",
     "devDependencies": {
-        "@types/cheerio": "0.22.0",
-        "@types/underscore": "1.8.3"
+        "@types/cheerio": "0.22.0"
     }
 }

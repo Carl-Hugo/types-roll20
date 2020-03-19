@@ -85,6 +85,7 @@ interface CampaignImmutableSynchronousGetProperties extends Roll20ObjectBaseProp
     readonly _type: "campaign";
     readonly _journalfolder: string;
     readonly _jukeboxfolder: string;
+    readonly _token_markers: string;
 }
 
 interface CampaignMutableSynchronousGetProperties {

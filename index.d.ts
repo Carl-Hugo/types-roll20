@@ -633,3 +633,22 @@ interface HandoutMutableSynchronousGetProperties {
 }
 
 interface Handout extends Roll20ObjectBase<HandoutImmutableSynchronousGetProperties, never, HandoutMutableSynchronousGetProperties, never> { }
+
+interface TokenMarkerObject {
+    /**
+     * The ID of the marker.
+     */
+    id: string;
+    /**
+     * Name of the marker.
+     */
+    name: string;
+    /**
+     * Tag of the marker. Must prepend 'status_' to reference from a token.
+     */
+    tag: string;
+    /**
+     * The url Roll20 references to view the marker.
+     */
+    url: string;
+}

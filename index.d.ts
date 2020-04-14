@@ -570,8 +570,6 @@ declare function on(event: "change:graphic", callback: (obj: Graphic, prev: Grap
 declare function on(event: "change:character", callback: (obj: Character, prev: Character) => void): void;
 declare function on(event: "change:campaign:playerpageid", callback: () => void): void;
 declare function on(event: "change:campaign:turnorder", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
-// Roll20 OGL 5E D&D Sheet only
-declare function on(event: "change:character:hp", callback: (obj: Character, prev: Character) => void): void;
 
 /**
  * Sends a chat message.

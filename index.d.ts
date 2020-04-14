@@ -568,7 +568,7 @@ declare function on(event: "ready", callback: () => void): void;
 declare function on(event: "chat:message", callback: (msg: ChatEventData) => void): void;
 declare function on(event: "change:graphic", callback: (obj: Roll20ObjectBaseProperties, prev: Roll20ObjectBaseProperties) => void): void;
 declare function on(event: "change:character", callback: (obj: Roll20ObjectBaseProperties, prev: Roll20ObjectBaseProperties) => void): void;
-declare function on(event: "change:attribute", callback: (obj: Roll20ObjectBaseProperties, prev: Roll20ObjectBaseProperties) => void): void;
+declare function on(event: "change:attribute", callback: (obj: Attribute, prev: Object) => void): void;
 declare function on(event: "change:campaign:playerpageid", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
 declare function on(event: "change:campaign:turnorder", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
 

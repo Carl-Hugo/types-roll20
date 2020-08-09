@@ -3,6 +3,11 @@
 declare const Cheerio: CheerioStatic;
 
 /**
+ * Properties of the globalconfig object are set in the API settings.
+ */
+declare const globalconfig: any;
+
+/**
  * Properties of the state object will persist between game sessions.
  */
 declare const state: any;

@@ -572,9 +572,10 @@ declare function log(message: any): void;
 declare function on(event: "ready", callback: () => void): void;
 declare function on(event: "add:graphic", callback: (obj: Roll20ObjectBaseProperties) => void): void;
 declare function on(event: "chat:message", callback: (msg: ChatEventData) => void): void;
-declare function on(event: "change:graphic", callback: (obj: Roll20ObjectBaseProperties, prev: Roll20ObjectBaseProperties) => void): void;
-declare function on(event: "change:character", callback: (obj: Roll20ObjectBaseProperties, prev: Roll20ObjectBaseProperties) => void): void;
-declare function on(event: "change:attribute", callback: (obj: Attribute, prev: Object) => void): void;
+declare function on(event: "change:page", callback: (obj: Roll20ObjectBaseProperties, prev: PageImmutableSynchronousGetProperties & PageMutableSynchronousGetProperties) => void): void;
+declare function on(event: "change:graphic", callback: (obj: Roll20ObjectBaseProperties, prev: GraphicImmutableSynchronousGetProperties & GraphicMutableSynchronousGetProperties) => void): void;
+declare function on(event: "change:character", callback: (obj: Roll20ObjectBaseProperties, prev: CharacterImmutableSynchronousGetProperties & CharacterMutableSynchronousGetProperties) => void): void;
+declare function on(event: "change:attribute", callback: (obj: Roll20ObjectBaseProperties, prev: AttributeImmutableSynchronousGetProperties & AttributeMutableSynchronousGetProperties) => void): void;
 declare function on(event: "change:campaign:playerpageid", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
 declare function on(event: "change:campaign:turnorder", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
 

@@ -570,7 +570,7 @@ declare function log(message: any): void;
  * * chat events have a msg parameter, which contains the details of the message that was sent to the chat.
  */
 declare function on(event: "ready", callback: () => void): void;
-declare function on(event: "add:graphic", callback: (obj: Roll20ObjectBaseProperties) => void): void;
+declare function on(event: "add:graphic", callback: (obj: Graphic) => void): void;
 declare function on(event: "chat:message", callback: (msg: ChatEventData) => void): void;
 declare function on(event: "change:page", callback: (obj: Page, prev: PageImmutableSynchronousGetProperties & PageMutableSynchronousGetProperties) => void): void;
 declare function on(event: "change:graphic", callback: (obj: Graphic, prev: GraphicImmutableSynchronousGetProperties & GraphicMutableSynchronousGetProperties) => void): void;

@@ -578,6 +578,7 @@ declare function on(event: "change:character", callback: (obj: Character, prev: 
 declare function on(event: "change:attribute", callback: (obj: Attribute, prev: AttributeImmutableSynchronousGetProperties & AttributeMutableSynchronousGetProperties) => void): void;
 declare function on(event: "change:campaign:playerpageid", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
 declare function on(event: "change:campaign:turnorder", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
+declare function on(event: "destroy:graphic", callback: (obj: Graphic) => void): void;
 
 /**
  * Sends a chat message.

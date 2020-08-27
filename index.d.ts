@@ -1,13 +1,14 @@
-//// <reference path="node_modules/@types/underscore/index.d.ts" />
-//// <reference path="node_modules/@types/cheerio/index.d.ts" />
-declare const Cheerio: CheerioStatic;
+/**
+ * Properties of the globalconfig object are set in the API settings.
+ */
+declare const globalconfig: any;
 
 /**
  * Properties of the state object will persist between game sessions.
  */
 declare const state: any;
 
-type ObjectType = "graphic" | "text" | "path" | "character" | "ability" | "attribute" | "handout" | "rollabletable" | "tableitem" | "macro" | "campaign" | "player";
+type ObjectType = "graphic" | "text" | "path" | "character" | "ability" | "attribute" | "handout" | "rollabletable" | "tableitem" | "macro" | "campaign" | "player" | "page";
 type RollType = "V" | "G" | "M" | "R" | "C";
 type RollResultType = "sum" | "success";
 type Layer = "gmlayer" | "objects" | "map" | "walls";
@@ -85,6 +86,7 @@ interface CampaignImmutableSynchronousGetProperties extends Roll20ObjectBaseProp
     readonly _type: "campaign";
     readonly _journalfolder: string;
     readonly _jukeboxfolder: string;
+    readonly _token_markers: string;
 }
 
 interface CampaignMutableSynchronousGetProperties {
@@ -208,6 +210,61 @@ interface GraphicMutableSynchronousGetProperties {
     light_losangle: string;
     lastmove: string;
     light_multiplier: string;
+    "status_all-for-one": boolean | number;
+    "status_angel-outfit": boolean | number;
+    "status_archery-target": boolean | number;
+    "status_arrowed": boolean | number;
+    "status_aura": boolean | number;
+    "status_back-pain": boolean | number;
+    "status_black-flag": boolean | number;
+    "status_bleeding-eye": boolean | number;
+    "status_blue": boolean | number;
+    "status_bolt-shield": boolean | number;
+    "status_broken-heart": boolean | number;
+    "status_broken-shield": boolean | number;
+    "status_broken-skull": boolean | number;
+    "status_brown": boolean | number;
+    "status_chained-heart": boolean | number;
+    "status_chemical-bolt": boolean | number;
+    "status_cobweb": boolean | number;
+    "status_dead": boolean | number;
+    "status_death-zone": boolean | number;
+    "status_drink-me": boolean | number;
+    "status_edge-crack": boolean | number;
+    "status_fishing-net": boolean | number;
+    "status_fist": boolean | number;
+    "status_fluffy-wing": boolean | number;
+    "status_flying-flag": boolean | number;
+    "status_frozen-orb": boolean | number;
+    "status_grab": boolean | number;
+    "status_green": boolean | number;
+    "status_grenade": boolean | number;
+    "status_half-haze": boolean | number;
+    "status_half-heart": boolean | number;
+    "status_interdiction": boolean | number;
+    "status_lightning-helix": boolean | number;
+    "status_ninja-mask": boolean | number;
+    "status_overdrive": boolean | number;
+    "status_padlock": boolean | number;
+    "status_pink": boolean | number;
+    "status_pummeled": boolean | number;
+    "status_purple": boolean | number;
+    "status_radioactive": boolean | number;
+    "status_red": boolean | number;
+    "status_rolling-bomb": boolean | number;
+    "status_screaming": boolean | number;
+    "status_sentry-gun": boolean | number;
+    "status_skull": boolean | number;
+    "status_sleepy": boolean | number;
+    "status_snail": boolean | number;
+    "status_spanner": boolean | number;
+    "status_stopwatch": boolean | number;
+    "status_strong": boolean | number;
+    "status_three-leaves": boolean | number;
+    "status_tread": boolean | number;
+    "status_trophy": boolean | number;
+    "status_white-tower": boolean | number;
+    "status_yellow": boolean | number;
 }
 
 interface Graphic extends Roll20ObjectBase<GraphicImmutableSynchronousGetProperties, never, GraphicMutableSynchronousGetProperties, never> { }
@@ -261,6 +318,37 @@ interface AbilityMutableSynchronousGetProperties {
 }
 
 interface Ability extends Roll20ObjectBase<AbilityImmutableSynchronousGetProperties, never, AbilityMutableSynchronousGetProperties, never> { }
+
+interface PageImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
+    readonly _type: "page";
+    readonly _zorder: string;
+}
+
+interface PageMutableSynchronousGetProperties {
+    name: string;
+    showgrid: boolean;
+    showdarkness: boolean;
+    showlighting: boolean;
+    width: number;
+    height: number;
+    snapping_increment: number;
+    grid_opacity: number;
+    fog_opacity: number;
+    background_color: string;
+    gridcolor: string;
+    grid_type: "square" | "hex" | "hexr";
+    scale_number: number;
+    scale_units: string;
+    gridlabels: boolean;
+    diagonaltype: "foure" | "pythagorean" | "threefive" | "manhattan";
+    archived: boolean;
+    lightupdatedrop: boolean;
+    lightenforcelos: boolean;
+    lightrestrictmove: boolean;
+    lightglobalillum: boolean;
+}
+
+interface Page extends Roll20ObjectBase<PageImmutableSynchronousGetProperties, never, PageMutableSynchronousGetProperties, never> { }
 
 interface TurnOrdering {
     readonly id: string;
@@ -439,6 +527,7 @@ declare function getObj(type: "attribute", id: string): Attribute | undefined;
 declare function getObj(type: "ability", id: string): Ability | undefined;
 declare function getObj(type: "player", id: string): Player | undefined;
 declare function getObj(type: "macro", id: string): Macro | undefined;
+declare function getObj(type: "page", id: string): Page | undefined;
 
 /**
  * Gets the value of an attribute, using the default value from the character sheet if the attribute is not present. value_type is an optional parameter, which you can use to specify "current" or "max".
@@ -477,8 +566,15 @@ declare function log(message: any): void;
  * * chat events have a msg parameter, which contains the details of the message that was sent to the chat.
  */
 declare function on(event: "ready", callback: () => void): void;
+declare function on(event: "add:graphic", callback: (obj: Graphic) => void): void;
 declare function on(event: "chat:message", callback: (msg: ChatEventData) => void): void;
+declare function on(event: "change:page", callback: (obj: Page, prev: PageImmutableSynchronousGetProperties & PageMutableSynchronousGetProperties) => void): void;
+declare function on(event: "change:graphic", callback: (obj: Graphic, prev: GraphicImmutableSynchronousGetProperties & GraphicMutableSynchronousGetProperties) => void): void;
+declare function on(event: "change:character", callback: (obj: Character, prev: CharacterImmutableSynchronousGetProperties & CharacterMutableSynchronousGetProperties) => void): void;
+declare function on(event: "change:attribute", callback: (obj: Attribute, prev: AttributeImmutableSynchronousGetProperties & AttributeMutableSynchronousGetProperties) => void): void;
+declare function on(event: "change:campaign:playerpageid", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
 declare function on(event: "change:campaign:turnorder", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
+declare function on(event: "destroy:graphic", callback: (obj: Graphic) => void): void;
 
 /**
  * Sends a chat message.
@@ -543,3 +639,22 @@ interface HandoutMutableSynchronousGetProperties {
 }
 
 interface Handout extends Roll20ObjectBase<HandoutImmutableSynchronousGetProperties, never, HandoutMutableSynchronousGetProperties, never> { }
+
+interface TokenMarkerObject {
+    /**
+     * The ID of the marker.
+     */
+    id: string;
+    /**
+     * Name of the marker.
+     */
+    name: string;
+    /**
+     * Tag of the marker. Must prepend 'status_' to reference from a token.
+     */
+    tag: string;
+    /**
+     * The url Roll20 references to view the marker.
+     */
+    url: string;
+}

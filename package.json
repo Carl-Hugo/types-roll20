@@ -6,9 +6,6 @@
         "type": "git",
         "url": "git+https://github.com/Carl-Hugo/types-roll20.git"
     },
-    "publishConfig": {
-        "registry": "https://www.myget.org/F/roll20/npm/"
-    },
     "keywords": [
         "roll20",
         "typescript",
@@ -16,7 +13,8 @@
     ],
     "contributors": [
         "Shaangor (https://github.com/Shaangor)",
-        "Carl-Hugo Marcotte"
+        "Carl-Hugo Marcotte",
+        "Layton B (https://github.com/LaytonGB)"
     ],
     "license": "MIT",
     "bugs": {

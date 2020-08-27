@@ -1,7 +1,3 @@
-//// <reference path="node_modules/@types/underscore/index.d.ts" />
-//// <reference path="node_modules/@types/cheerio/index.d.ts" />
-declare const Cheerio: CheerioStatic;
-
 /**
  * Properties of the globalconfig object are set in the API settings.
  */

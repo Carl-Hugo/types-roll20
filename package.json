@@ -1,26 +1,26 @@
 {
-    "name": "@types/roll20",
-    "version": "1.0.3",
-    "description": "Roll20 type definition",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/Carl-Hugo/types-roll20.git"
-    },
-    "keywords": [
-        "roll20",
-        "typescript",
-        "typescript-definition"
-    ],
-    "contributors": [
-        "Shaangor (https://github.com/Shaangor)",
-        "Carl-Hugo Marcotte",
-        "Layton B (https://github.com/LaytonGB)"
-    ],
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/Carl-Hugo/types-roll20/issues"
-    },
-    "homepage": "https://github.com/Carl-Hugo/types-roll20#readme",
-    "devDependencies": {},
-    "dependencies": {}
+  "name": "@types/roll20",
+  "version": "1.0.3",
+  "description": "Roll20 type definition",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Carl-Hugo/types-roll20.git"
+  },
+  "keywords": [
+    "roll20",
+    "typescript",
+    "typescript-definition"
+  ],
+  "contributors": [
+    "Shaangor (https://github.com/Shaangor)",
+    "Carl-Hugo Marcotte (https://github.com/Carl-Hugo)",
+    "Layton B (https://github.com/LaytonGB)"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Carl-Hugo/types-roll20/issues"
+  },
+  "homepage": "https://github.com/Carl-Hugo/types-roll20#readme",
+  "devDependencies": {},
+  "dependencies": {}
 }

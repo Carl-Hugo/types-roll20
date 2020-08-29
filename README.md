@@ -2,23 +2,20 @@
 
 Roll20 type definition
 
-## NPM
-
-I may publish the definition files on the public registry at some points, until then, I've created a roll20 feed on my MyGet account.
-All my roll20 stuff are accessible there: [https://www.myget.org/F/roll20/npm/](https://www.myget.org/F/roll20/npm/).
-
-> RSS Feed: [https://www.myget.org/RSS/roll20](https://www.myget.org/RSS/roll20)
-
-## Install
-
-You can create a `.npmrc` file at the root of your project to use MyGet feed. Set the content to:
-
-```
-registry="https://www.myget.org/F/roll20/npm/"
-```
-
-Then you can:
+## How to install?
 
 ```bash
-npm i @types/roll20 --save-dev
+npm i types-roll20 --save-dev
 ```
+
+See https://www.npmjs.com/package/types-roll20
+
+## How to contribute?
+
+1. Fork the repo
+1. Do the changes
+1. Test your changes
+1. Add yourself to the `contributors` array in the `package.json` file.
+1. Open a Pull Request
+
+I'll try to merge the PRs as soon as possible.

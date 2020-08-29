@@ -13,9 +13,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # strategy:
-    #   matrix:
-    #     node-version: [10.x, 12.x, 14.x]
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x, 14.x]
 
     steps:
       - uses: actions/checkout@v2
@@ -23,14 +23,15 @@ jobs:
           fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
 
       - uses: dotnet/nbgv@master
+        id: nbgv
         with:
           stamp: package.json
 
-      #   - name: Use Node.js ${{ matrix.node-version }}
-      #     uses: actions/setup-node@v1
-      #     with:
-      #       node-version: ${{ matrix.node-version }}
-    #   - run: npm ci
-    #   - run: npm run build --if-present
-    #   - run: npm test
-    - run: npm version 
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

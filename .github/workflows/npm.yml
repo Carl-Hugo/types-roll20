@@ -22,6 +22,7 @@ jobs:
         id: nbgv
         with:
           stamp: package.json
+        env:
           PublicRelease: ${{ github.event_name == 'push' }}
 
       - name: Setup node

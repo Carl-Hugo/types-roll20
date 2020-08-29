@@ -1,7 +1,7 @@
 {
-  "name": "@types/roll20",
+  "name": "types-roll20",
   "version": "1.1.2",
-  "description": "Roll20 type definition",
+  "description": "Roll20 types definition",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Carl-Hugo/types-roll20.git"
@@ -11,9 +11,6 @@
     "typescript",
     "typescript-definition"
   ],
-  "publishConfig": {
-    "registry": "https://www.myget.org/F/roll20/npm/"
-  },
   "contributors": [
     "Shaangor (https://github.com/Shaangor)",
     "Carl-Hugo Marcotte (https://github.com/Carl-Hugo)",

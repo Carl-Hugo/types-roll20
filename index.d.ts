@@ -25,10 +25,9 @@ declare global {
 
     type BasicEvents = 'add' | 'destroy'
     type AddDestroyEvents = `${BasicEvents}:${ObjectTypes | SubTypes}`
-    type ChangeEvent<T extends ObjectTypes> = `change:${T}` | `change:${T}:${EventChangableProps<T>}`
+    type ChangeEvent<T extends ObjectTypes> = `change:${T}` | `change:${T}:${UnderscoreVariants<EventChangableProps<T>>}`
     type AllChangeEvents = { [T in ObjectTypes]: ChangeEvent<T> }[ObjectTypes]
     type EventChangableProps<T extends ObjectTypes> = string & keyof Omit<ObjectTypeMap[T], '_type' | '_id'>
-
     type ObjectFromCreateDeleteEvent<Event extends AddDestroyEvents> = Event extends `${BasicEvents}:${infer Type & CreatableObjectTypes}`
         ? PropertyOrDefault<ObjectTypes, Type, Graphic>
         : never

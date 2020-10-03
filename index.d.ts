@@ -204,35 +204,35 @@ declare type ObjectTypeMap = {
 }
 
 
-function Campaign(): Roll20Object<CampaignObject>
-function createObj<T extends CreatableObjectTypes>(type: T, props: Partial<ObjectCreateProperties<T>>): Roll20Object<ObjectTypeMap[T]>
-function getObj<T extends ObjectTypes>(type: T, id: string): Roll20Object<ObjectTypeMap[T]>;
-function findObjs<
+declare function Campaign(): Roll20Object<CampaignObject>
+declare function createObj<T extends CreatableObjectTypes>(type: T, props: Partial<ObjectCreateProperties<T>>): Roll20Object<ObjectTypeMap[T]>
+declare function getObj<T extends ObjectTypes>(type: T, id: string): Roll20Object<ObjectTypeMap[T]>;
+declare function findObjs<
     R extends ObjectTypes,
     T extends Readonly<{ id?: string, type: R } & Partial<PropertyOrDefault<ObjectTypeMap, R, AnyObject>>>
 >(attrs: T, options?: { caseInsensitive: boolean }): FindObjType<T>[]
-function filterObjs(predicate: (obj: AnyRoll20Object) => unknown): AnyRoll20Object
-function getAllObjs(): AnyRoll20Object
-function getAttrByName(characterId: string, attributeName: string, valueType?: 'current' | 'max'): unknown
-function sendChat(speakingAs: string, input: string, cb?: (ops: Roll20Message) => void, options?: { noarchive: boolean, use3d: boolean }): void
-function log(item: unknown): void
-function toFront(obj: AnyRoll20Object): void
-function toBack(obj: AnyRoll20Object): void
-function randomInteger(max: number): number
-function playerIsGM(playerId: string): boolean
-function setDefaultTokenForCharacter(character: Roll20Object<Character>, token: Roll20Object<Graphic>): void
-function spawnFx<T extends string>(x: number, y: number, type: EffectType<T>, pageId?: string): void
-function spawnFxBetweenPoints<T extends string>(point1: Point, point2: Point, type: EffectType<T>, pageId: string): void
-function spawnFxWithDefinition(x: number, y: number, definitionJSON: CustomFXDefinition, pageId: string): void
-function playJukeboxPlaylist(playlistId: string): void
-function stopJukeboxPlaylist(): void
-function sendPing(left: number, top: number, pageId: string, playerId?: string, moveAll?: boolean, visibleTo?: string | string[]): void
-function onSheetWorkerComplete(cb: () => void): void
+declare function filterObjs(predicate: (obj: AnyRoll20Object) => unknown): AnyRoll20Object
+declare function getAllObjs(): AnyRoll20Object
+declare function getAttrByName(characterId: string, attributeName: string, valueType?: 'current' | 'max'): unknown
+declare function sendChat(speakingAs: string, input: string, cb?: (ops: Roll20Message) => void, options?: { noarchive: boolean, use3d: boolean }): void
+declare function log(item: unknown): void
+declare function toFront(obj: AnyRoll20Object): void
+declare function toBack(obj: AnyRoll20Object): void
+declare function randomInteger(max: number): number
+declare function playerIsGM(playerId: string): boolean
+declare function setDefaultTokenForCharacter(character: Roll20Object<Character>, token: Roll20Object<Graphic>): void
+declare function spawnFx<T extends string>(x: number, y: number, type: EffectType<T>, pageId?: string): void
+declare function spawnFxBetweenPoints<T extends string>(point1: Point, point2: Point, type: EffectType<T>, pageId: string): void
+declare function spawnFxWithDefinition(x: number, y: number, definitionJSON: CustomFXDefinition, pageId: string): void
+declare function playJukeboxPlaylist(playlistId: string): void
+declare function stopJukeboxPlaylist(): void
+declare function sendPing(left: number, top: number, pageId: string, playerId?: string, moveAll?: boolean, visibleTo?: string | string[]): void
+declare function onSheetWorkerComplete(cb: () => void): void
 
-function on(event: 'ready', cb: Function): void
-function on(event: 'chat:message', cb: (msg: Roll20Message) => void): void
-function on<T extends AddDestroyEvents>(event: T, cb: (obj: Roll20Object<ObjectFromCreateDeleteEvent<T>>) => void): void
-function on<T extends AllChangeEvents>(event: T, cb: (obj: Roll20Object<ObjectFromChangeEvent<T>>, prev: Readonly<ObjectFromChangeEvent<T>>) => void): void
+declare function on(event: 'ready', cb: Function): void
+declare function on(event: 'chat:message', cb: (msg: Roll20Message) => void): void
+declare function on<T extends AddDestroyEvents>(event: T, cb: (obj: Roll20Object<ObjectFromCreateDeleteEvent<T>>) => void): void
+declare function on<T extends AllChangeEvents>(event: T, cb: (obj: Roll20Object<ObjectFromChangeEvent<T>>, prev: Readonly<ObjectFromChangeEvent<T>>) => void): void
 
 declare interface Path {
     /**

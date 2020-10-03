@@ -87,7 +87,10 @@ declare type SubTypes = 'card' | 'token'
 declare type ObjectTypes = keyof ObjectTypeMap
 // have to use extract so that TS knows that CreatableObjectTypes is a subset of ObjectTypes
 declare type CreatableObjectTypes = Extract<ObjectTypes, 'graphic' | 'text' | 'path' | 'character' | 'ability' | 'attribute' | 'handout' | 'rollabletable' | 'tableitem' | 'macro'>
-const state: any
+
+declare interface Roll20State { }
+
+declare const state: Roll20State
 
 declare type Roll20Message = Roll20GeneralMessage | Roll20RollResultMessage | Roll20WhisperMessage | Roll20WhisperMessage | Roll20ApiMessage
 declare type Roll20MessageBase = {

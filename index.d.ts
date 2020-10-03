@@ -211,8 +211,8 @@ declare function findObjs<
     R extends ObjectTypes,
     T extends Readonly<{ id?: string, type: R } & Partial<PropertyOrDefault<ObjectTypeMap, R, AnyObject>>>
 >(attrs: T, options?: { caseInsensitive: boolean }): FindObjType<T>[]
-declare function filterObjs(predicate: (obj: AnyRoll20Object) => unknown): AnyRoll20Object
-declare function getAllObjs(): AnyRoll20Object
+declare function filterObjs(predicate: (obj: AnyRoll20Object) => unknown): AnyRoll20Object[]
+declare function getAllObjs(): AnyRoll20Object[]
 declare function getAttrByName(characterId: string, attributeName: string, valueType?: 'current' | 'max'): unknown
 declare function sendChat(speakingAs: string, input: string, cb?: (ops: Roll20Message) => void, options?: { noarchive: boolean, use3d: boolean }): void
 declare function log(item: unknown): void

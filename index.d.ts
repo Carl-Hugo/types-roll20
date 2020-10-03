@@ -1,416 +1,142 @@
-/**
- * Properties of the globalconfig object are set in the API settings.
- */
-declare const globalconfig: any;
+// internal types
+declare type PossiblyReadOnlyProperty<T, S extends string> = PropertyOrDefault<T, S, PropertyOrDefault<T, `_${S}`>>
+declare type UnderscoreVariants<T extends string> = T extends `_${infer Value}` ? Value | T : T
+declare type PropertyOrDefault<Object, Key, Default = unknown> = Key extends keyof Object ? Object[Key] : Default
 
-/**
- * Properties of the state object will persist between game sessions.
- */
-declare const state: any;
+declare type IfEquals<X, Y, A = X, B = never> =
+    (<T>() => T extends X ? 1 : 2) extends
+    (<T>() => T extends Y ? 1 : 2) ? A : B;
 
-type ObjectType = "graphic" | "text" | "path" | "character" | "ability" | "attribute" | "handout" | "rollabletable" | "tableitem" | "macro" | "campaign" | "player" | "page";
-type RollType = "V" | "G" | "M" | "R" | "C";
-type RollResultType = "sum" | "success";
-type Layer = "gmlayer" | "objects" | "map" | "walls";
+declare type WritableKeys<T> = {
+    [P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, P>
+}[keyof T];
 
-/**
- * Roll20 objects are a special kind of JavaScript object. They represent something in your campaign, such as a token on the tabletop or a character in the journal, and there is some special consideration for using them. 
- */
-interface Roll20Object {
+declare type ReadonlyKeys<T> = {
+    [P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, never, P>
+}[keyof T];
 
-    /**
-     * This field is shorthand for obj.get('id'). All Roll20 objects have a _id property which uniquely identifies them within a campaign, but their properties are not directly accessible. Normally you have to call get in order to get the value of a property, but because _id is needed on such a frequent basis, this shim field is provided for convenience.
-     */
-    readonly id: string;
+declare type PathFix<T> = T extends Path ? { path: Path['_path'] } : {}
 
-    /**
-     * Deletes the Roll20 object.
-     */
-    remove(): void;
+
+// Actual types
+
+declare type BasicEvents = 'add' | 'destroy'
+declare type AddDestroyEvents = `${BasicEvents}:${ObjectTypes | SubTypes}`
+declare type ChangeEvent<T extends ObjectTypes> = `change:${T}` | `change:${T}:${UnderscoreVariants<EventChangableProps<T>>}`
+declare type AllChangeEvents = { [T in ObjectTypes]: ChangeEvent<T> }[ObjectTypes]
+declare type EventChangableProps<T extends ObjectTypes> = string & keyof Omit<ObjectTypeMap[T], '_type' | '_id'>
+declare type ObjectFromCreateDeleteEvent<Event extends AddDestroyEvents> = Event extends `${BasicEvents}:${infer Type & CreatableObjectTypes}`
+    ? PropertyOrDefault<ObjectTypes, Type, Graphic>
+    : never
+
+declare type ObjectFromChangeEvent<Event extends AllChangeEvents> = Event extends `change:${infer Type & (ObjectTypes | SubTypes)}`
+    ? Type
+    : Event extends `change:${infer Type & (ObjectTypes | SubTypes)}`
+    ? Type
+    : never
+
+declare type BuiltInEffect = 'beam' | 'bomb' | 'breath' | 'bubbling' | 'burn' | 'burst' | 'explode' | 'glow' | 'missile' | 'nova' | 'splatter'
+declare type EffectColor = 'acid' | 'blood' | 'charm' | 'death' | 'fire' | 'frost' | 'holy' | 'magic' | 'slime' | 'smoke' | 'water'
+declare type EffectType<T extends string> = T extends `-${infer S}`
+    ? `-${S}` // ids seem to always begin with `-`
+    : T extends `${BuiltInEffect}-${EffectColor}` // the below lines seem redundant but without them you lose the nice typehinting
+    ? T
+    : `${BuiltInEffect}-${EffectColor}`
+
+declare type AnyRoll20Object = { [K in keyof ObjectTypeMap]: Roll20Object<ObjectTypeMap[K]> }[ObjectTypes]
+declare type AnyObject = ObjectTypeMap[ObjectTypes]
+declare type FindObjType<T> = T extends Record<'_type', infer X & ObjectTypes>
+    ? Roll20Object<PropertyOrDefault<ObjectTypeMap, X, ObjectTypeMap[ObjectTypes]>>
+    : T extends Record<'type', infer Y & ObjectTypes>
+    ? Roll20Object<PropertyOrDefault<ObjectTypeMap, Y, ObjectTypeMap[ObjectTypes]>>
+    : AnyRoll20Object
+
+declare type NonRandomCustomFXDefinition = {
+    angle: number,
+    duration: number
+    emissionRate: number,
+    gravity: number,
+    lifeSpan: number
+    maxParticles: number,
+    size: number,
+    speed: number,
+    sizeRandom: number,
+    startColour: [number, number, number, number?],
+    endColour: [number, number, number, number?]
 }
 
-interface Roll20ObjectBase<TImmutableSynchronousGetProperties, TImmutableAsynchronousGetProperties, TMutableSynchronousGetProperties, TMutableAsynchronousGetProperties> extends Roll20Object {
+declare type CustomFXDefinition = NonRandomCustomFXDefinition
+    & { [T in keyof NonRandomCustomFXDefinition as `${T}Random`]: NonRandomCustomFXDefinition[T] }
+    & Record<'onDeath', string>
+declare type Point = { x: number, y: number }
 
-    /**
-     * Gets the value of a specified property.
-     * 
-     * @param property The name of the property to get. If you are getting the value of a read-only property (one which starts with an underscore, like _id or _type), the leading underscore is not required.
-     */
-    get<K extends keyof (TImmutableSynchronousGetProperties & TMutableSynchronousGetProperties)>(property: K): (TImmutableSynchronousGetProperties & TMutableSynchronousGetProperties)[K];
+declare type ObjectCreateProperties<T extends ObjectTypes> = { [Key in CreatableProp<T>]: CreatableValue<ObjectTypeMap[T], Key> }
+declare type CreatableProp<T extends ObjectTypes> = WritableKeys<ObjectTypeMap[T]> | `${ForeignKey<string & keyof ObjectTypeMap[T]>}id`
+declare type ForeignKey<T extends string> = T extends '_id' ? never : T extends `_${infer Obj}id` ? Obj : never
+declare type CreatableValue<T, K> = K extends keyof T
+    ? T[K]
+    : K extends `${infer Obj}id`
+    ? PropertyOrDefault<T, `_${Obj}id`>
+    : unknown
 
-    /**
-     * Gets the value of "notes", "gmnotes", or "bio" properties of a character or handout Roll20 object.
-     * 
-     * @param property The name of the property to get. If you are getting the value of a read-only property (one which starts with an underscore, like _id or _type), the leading underscore is not required.
-     * @param callback A callback function which will receive the value of the property as a parameter.
-     */
-    get<K extends keyof (TImmutableAsynchronousGetProperties & TMutableAsynchronousGetProperties)>(property: K, callback: (value: (TImmutableAsynchronousGetProperties & TMutableAsynchronousGetProperties)[K]) => void): void;
+declare type RollType = "V" | "G" | "M" | "R" | "C";
+declare type RollResultType = "sum" | "success";
+declare type Layer = "gmlayer" | "objects" | "map" | "walls";
+declare type SubTypes = 'card' | 'token'
 
-    /**
-     * Sets one specified property value.
-     * 
-     * @param property The name of the property to set.
-     * @param value The value to set for the specified property.
-     */
-    set<K extends keyof (TMutableSynchronousGetProperties | TMutableAsynchronousGetProperties)>(property: K, value: (TMutableSynchronousGetProperties | TMutableAsynchronousGetProperties)[K]): void;
+declare type ObjectTypes = keyof ObjectTypeMap
+// have to use extract so that TS knows that CreatableObjectTypes is a subset of ObjectTypes
+declare type CreatableObjectTypes = Extract<ObjectTypes, 'graphic' | 'text' | 'path' | 'character' | 'ability' | 'attribute' | 'handout' | 'rollabletable' | 'tableitem' | 'macro'>
 
-    /**
-     * Sets one specified property value and runs the character sheet workers related to that property (if any).
-     * 
-     * @param property The name of the property to set.
-     * @param value The value to set for the specified property.
-     */
-    setWithWorker<K extends keyof (TMutableSynchronousGetProperties | TMutableAsynchronousGetProperties)>(property: K, value: (TMutableSynchronousGetProperties | TMutableAsynchronousGetProperties)[K]): void;
+declare interface Roll20State { }
 
-    /**
-     * Sets one or more specified property values.
-     * 
-     * @param properties The properties of the properties object will be mapped to the properties of the Roll20 object.
-     */
-    set(properties: Partial<TMutableSynchronousGetProperties | TMutableAsynchronousGetProperties>): void;
+declare const state: Roll20State
 
-    /**
-     * Sets one or more specified property values and runs the character sheet workers related to that property (if any).
-     * 
-     * @param properties The properties of the properties object will be mapped to the properties of the Roll20 object.
-     */
-    setWithWorker(properties: Partial<TMutableSynchronousGetProperties | TMutableAsynchronousGetProperties>): void;
+declare type Roll20Message = Roll20GeneralMessage | Roll20RollResultMessage | Roll20WhisperMessage | Roll20WhisperMessage | Roll20ApiMessage
+declare type Roll20MessageBase = {
+    readonly who: string,
+    readonly playerid: string,
+    readonly content: string,
+    readonly inlinerolls?: InlineRollSummary[],
+    readonly rolltemplate?: string
+}
+declare type Roll20GeneralMessage = Roll20MessageBase & Readonly<{ type: 'general' | 'emote' | 'desc', }>
+declare type Roll20RollResultMessage = Roll20MessageBase & Readonly<{ origroll: string, type: 'rollresult' | 'gmrollresult' }>
+declare type Roll20WhisperMessage = Roll20MessageBase & Readonly<{ target: string, target_name: string, type: 'whisper' }>
+declare type Roll20ApiMessage = Roll20MessageBase & Readonly<{ selected: MessageSelectType[], type: 'api' }>
+
+declare type MessageSelectType = {
+    readonly _id: string,
+    readonly _pageid?: string,
+    readonly _type: ObjectTypes
 }
 
-interface Roll20ObjectBaseProperties {
-    readonly _id: string;
-    readonly _type: ObjectType;
-}
-
-interface CampaignImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
-    readonly _type: "campaign";
-    readonly _journalfolder: string;
-    readonly _jukeboxfolder: string;
-    readonly _token_markers: string;
-}
-
-interface CampaignMutableSynchronousGetProperties {
-    turnorder: string;
-    initiativepage: string;
-    playerpageid: string;
-    playerspecificpages: any; //TODO
-}
-
-interface Campaign extends Roll20ObjectBase<CampaignImmutableSynchronousGetProperties, never, CampaignMutableSynchronousGetProperties, never> { }
-
-interface PlayerImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
-    readonly _type: "player";
-    readonly _d20userid: string;
-    readonly _displayname: string;
-    readonly _online: boolean;
-    readonly _lastpage: string;
-    readonly _macrobar: string;
-}
-
-interface PlayerMutableSynchronousGetProperties {
-    speakingas: string;
-    color: string;
-    showmacrobar: boolean;
-}
-
-interface Player extends Roll20ObjectBase<PlayerImmutableSynchronousGetProperties, never, PlayerMutableSynchronousGetProperties, never> { }
-
-interface MacroImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
-    readonly _type: "macro";
-    readonly _playerid: string;
-}
-
-interface MacroMutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
-    name: string;
-    action: string;
-    visibleto: string;
-    istokenaction: boolean;
-}
-
-interface Macro extends Roll20ObjectBase<MacroImmutableSynchronousGetProperties, never, MacroMutableSynchronousGetProperties, never> { }
-
-interface TextImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
-    readonly _type: "text";
-    readonly _pageid: string;
-}
-
-interface TextMutableSynchronousGetProperties {
-    top: number;
-    left: number;
-    width: number;
-    height: number;
-    text: string;
-    font_size: 8 | 10 | 12 | 14 | 16 | 18 | 20 | 22 | 26 | 32 | 40 | 56 | 72 | 100 | 200 | 300;
-    rotation: number;
-    color: string;
-    font_family: "unset" | "Arial" | "Patrick Hand" | "Contrail" | "Light" | "Candal";
-    layer: Layer;
-    controlledby: string;
-}
-
-interface Text extends Roll20ObjectBase<TextImmutableSynchronousGetProperties, never, TextMutableSynchronousGetProperties, never> { }
-
-interface GraphicImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
-    readonly _type: "graphic";
-    readonly _subtype: "token" | "card";
-    readonly _cardId?: string;
-    readonly _pageid: ""
-}
-
-interface GraphicMutableSynchronousGetProperties {
-    imgsrc: string;
-    bar1_link: string;
-    bar2_link: string;
-    bar3_link: string;
-    represents: string;
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-    rotation: number;
-    layer: Layer;
-    isdrawing: boolean;
-    flipv: boolean;
-    fliph: boolean;
-    name: string;
-    gmnotes: string;
-    controlledby: string;
-    bar1_value: string | number;
-    bar2_value: string | number;
-    bar3_value: string | number;
-    bar1_max: string | number;
-    bar2_max: string | number;
-    bar3_max: string | number;
-    aura1_radius: string;
-    aura2_radius: string;
-    aura1_color: string;
-    aura2_color: string;
-    aura1_square: boolean;
-    aura2_square: boolean;
-    tint_color: string;
-    statusmarkers: string;
-    showname: boolean;
-    showplayers_name: boolean;
-    showplayers_bar1: boolean;
-    showplayers_bar2: boolean;
-    showplayers_bar3: boolean;
-    showplayers_aura1: boolean;
-    showplayers_aura2: boolean;
-    playersedit_name: boolean;
-    playersedit_bar1: boolean;
-    playersedit_bar2: boolean;
-    playersedit_bar3: boolean;
-    playersedit_aura1: boolean;
-    playersedit_aura2: boolean;
-    light_radius: string;
-    light_dimradius: string;
-    light_otherplayers: boolean;
-    light_hassight: boolean;
-    light_angle: string;
-    light_losangle: string;
-    lastmove: string;
-    light_multiplier: string;
-    "status_all-for-one": boolean | number;
-    "status_angel-outfit": boolean | number;
-    "status_archery-target": boolean | number;
-    "status_arrowed": boolean | number;
-    "status_aura": boolean | number;
-    "status_back-pain": boolean | number;
-    "status_black-flag": boolean | number;
-    "status_bleeding-eye": boolean | number;
-    "status_blue": boolean | number;
-    "status_bolt-shield": boolean | number;
-    "status_broken-heart": boolean | number;
-    "status_broken-shield": boolean | number;
-    "status_broken-skull": boolean | number;
-    "status_brown": boolean | number;
-    "status_chained-heart": boolean | number;
-    "status_chemical-bolt": boolean | number;
-    "status_cobweb": boolean | number;
-    "status_dead": boolean | number;
-    "status_death-zone": boolean | number;
-    "status_drink-me": boolean | number;
-    "status_edge-crack": boolean | number;
-    "status_fishing-net": boolean | number;
-    "status_fist": boolean | number;
-    "status_fluffy-wing": boolean | number;
-    "status_flying-flag": boolean | number;
-    "status_frozen-orb": boolean | number;
-    "status_grab": boolean | number;
-    "status_green": boolean | number;
-    "status_grenade": boolean | number;
-    "status_half-haze": boolean | number;
-    "status_half-heart": boolean | number;
-    "status_interdiction": boolean | number;
-    "status_lightning-helix": boolean | number;
-    "status_ninja-mask": boolean | number;
-    "status_overdrive": boolean | number;
-    "status_padlock": boolean | number;
-    "status_pink": boolean | number;
-    "status_pummeled": boolean | number;
-    "status_purple": boolean | number;
-    "status_radioactive": boolean | number;
-    "status_red": boolean | number;
-    "status_rolling-bomb": boolean | number;
-    "status_screaming": boolean | number;
-    "status_sentry-gun": boolean | number;
-    "status_skull": boolean | number;
-    "status_sleepy": boolean | number;
-    "status_snail": boolean | number;
-    "status_spanner": boolean | number;
-    "status_stopwatch": boolean | number;
-    "status_strong": boolean | number;
-    "status_three-leaves": boolean | number;
-    "status_tread": boolean | number;
-    "status_trophy": boolean | number;
-    "status_white-tower": boolean | number;
-    "status_yellow": boolean | number;
-}
-
-interface Graphic extends Roll20ObjectBase<GraphicImmutableSynchronousGetProperties, never, GraphicMutableSynchronousGetProperties, never> { }
-
-interface CharacterImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
-    readonly _type: "character";
-}
-
-interface CharacterImmutableAsynchronousGetProperties {
-    readonly _defaulttoken: string;
-}
-
-interface CharacterMutableSynchronousGetProperties {
-    avatar: string;
-    name: string;
-    archived: boolean;
-    inplayerjournals: string;
-    controlledby: string;
-}
-
-interface CharacterMutableAsynchronousGetProperties {
-    bio: string;
-    gmnotes: string;
-}
-
-interface Character extends Roll20ObjectBase<CharacterImmutableSynchronousGetProperties, CharacterImmutableAsynchronousGetProperties, CharacterMutableSynchronousGetProperties, CharacterMutableAsynchronousGetProperties> { }
-
-interface AttributeImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
-    readonly _type: "attribute";
-    readonly _characterid: string;
-}
-
-interface AttributeMutableSynchronousGetProperties {
-    name: string;
-    current: string;
-    max: string;
-}
-
-interface Attribute extends Roll20ObjectBase<AttributeImmutableSynchronousGetProperties, never, AttributeMutableSynchronousGetProperties, never> { }
-
-interface AbilityImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
-    readonly _type: "ability";
-    readonly _characterid: string;
-}
-
-interface AbilityMutableSynchronousGetProperties {
-    name: string;
-    description: string;
-    action: string;
-    istokenaction: boolean;
-}
-
-interface Ability extends Roll20ObjectBase<AbilityImmutableSynchronousGetProperties, never, AbilityMutableSynchronousGetProperties, never> { }
-
-interface PageImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
-    readonly _type: "page";
-    readonly _zorder: string;
-}
-
-interface PageMutableSynchronousGetProperties {
-    name: string;
-    showgrid: boolean;
-    showdarkness: boolean;
-    showlighting: boolean;
-    width: number;
-    height: number;
-    snapping_increment: number;
-    grid_opacity: number;
-    fog_opacity: number;
-    background_color: string;
-    gridcolor: string;
-    grid_type: "square" | "hex" | "hexr";
-    scale_number: number;
-    scale_units: string;
-    gridlabels: boolean;
-    diagonaltype: "foure" | "pythagorean" | "threefive" | "manhattan";
-    archived: boolean;
-    lightupdatedrop: boolean;
-    lightenforcelos: boolean;
-    lightrestrictmove: boolean;
-    lightglobalillum: boolean;
-}
-
-interface Page extends Roll20ObjectBase<PageImmutableSynchronousGetProperties, never, PageMutableSynchronousGetProperties, never> { }
-
-interface TurnOrdering {
-    readonly id: string;
-    readonly pr: number;
-    readonly custom: string;
-    readonly _pageid: string;
-}
-
-interface ChatEventData {
-    readonly who: string;
-    readonly playerid: string;
-    readonly type: "general" | "rollresult" | "gmrollresult" | "emote" | "whisper" | "desc" | "api";
-    readonly content: string;
-    readonly inlinerolls?: InlineRollSummary[];
-    readonly rolltemplate?: string;
-}
-
-interface RollResultChatEventData extends ChatEventData {
-    readonly origRoll: string;
-    readonly signature: string;
-}
-
-interface WhisperChatEventData extends ChatEventData {
-    readonly target: string;
-    readonly target_name: string;
-}
-
-interface ApiChatEventData extends ChatEventData {
-    readonly selected?: ApiChatEventDataSelectObjectInfo[];
-}
-
-interface ApiChatEventDataSelectObjectInfo {
-    readonly _id: string;
-    readonly _type: ObjectType;
-}
-
-interface InlineRollSummary {
+declare interface InlineRollSummary {
     readonly expression: string;
     readonly results: RollSummary;
     readonly rollid: string;
     readonly signature: string;
 }
 
-interface RollSummary {
+declare interface RollSummary {
     readonly type: RollType;
     readonly rolls: RollInfo[];
     readonly resultType: RollResultType;
     readonly total: number;
 }
 
-interface RollInfo {
+declare interface RollInfo {
     readonly type: RollType;
 }
 
-interface GroupRoll extends RollInfo {
+declare interface GroupRoll extends RollInfo {
     readonly rolls: RollInfo[];
     readonly mods: RollModification;
     readonly resultType: RollResultType;
     readonly results: RollResult[];
 }
 
-interface BasicRoll extends RollInfo {
+declare interface BasicRoll extends RollInfo {
     readonly dice: number;
     readonly sides: number;
     readonly mods: RollModification;
@@ -418,243 +144,1038 @@ interface BasicRoll extends RollInfo {
     readonly table?: string;
 }
 
-interface MathExpression extends RollInfo {
+declare interface MathExpression extends RollInfo {
     readonly expr: string;
 }
 
-interface RollComment extends RollInfo {
+declare interface RollComment extends RollInfo {
     readonly text: string;
 }
 
-interface RollModification {
+declare interface RollModification {
     //should this be inheritance?
     readonly compounding?: RollModificationComparison;
     readonly success?: RollModificationComparison;
 }
 
-interface RollModificationComparison {
+declare interface RollModificationComparison {
     readonly comp: string;
     readonly point: number;
 }
 
-interface RollResult {
+declare interface RollResult {
     readonly v: number;
 }
 
-interface TableRollResult extends RollResult {
+declare interface TableRollResult extends RollResult {
     readonly tableidx: number;
     readonly tableItem: TableItem;
 }
-
-interface TableItem {
-    readonly name: string;
-    readonly avatar: string;
-    readonly weight: number;
-    readonly id: string;
+declare type Roll20Object<T extends ObjectTypeMap[ObjectTypes]> = {
+    readonly id: string,
+    get<S extends UnderscoreVariants<string & keyof T>>(key: S): PossiblyReadOnlyProperty<T, S>,
+    get<S extends UnderscoreVariants<string & keyof T>>(key: UnderscoreVariants<S>, cb: (value: PossiblyReadOnlyProperty<T, S>) => void): void,
+    set<S extends WritableKeys<T>>(key: S, value: T[S]): void
+    set<S extends WritableKeys<T>>(properties: Partial<{ [Key in S]: T[S] }>): void
+    setWithWorker<S extends WritableKeys<T>>(key: S, value: T[S]): void
+    setWithWorker<S extends WritableKeys<T>>(properties: Partial<{ [Key in S]: T[S] }>): void
+    remove(): void
 }
 
-interface FindObjectOptions {
-    readonly caseInsensitive: boolean;
+declare type ObjectTypeMap = {
+    path: Path,
+    text: Roll20Text,
+    graphic: Graphic,
+    page: Page,
+    campaign: CampaignObject,
+    player: Player,
+    macro: Macro,
+    rollabletable: RollableTable,
+    tableitem: TableItem,
+    character: Character,
+    attribute: Attribute,
+    ability: Ability,
+    handout: Handout,
+    deck: Deck,
+    card: Card,
+    hand: Hand,
+    jukeboxtrack: JukeboxTrack,
+    customfx: CustomFX,
 }
 
-interface ChatMessageHandlingOptions {
-    readonly noarchive?: boolean;
-    readonly use3d?: boolean;
+
+declare function Campaign(): Roll20Object<CampaignObject>
+declare function createObj<T extends CreatableObjectTypes>(type: T, props: Partial<ObjectCreateProperties<T>>): Roll20Object<ObjectTypeMap[T]>
+declare function getObj<T extends ObjectTypes>(type: T, id: string): Roll20Object<ObjectTypeMap[T]>;
+declare function findObjs<
+    R extends ObjectTypes,
+    T extends Readonly<{ id?: string, type: R } & Partial<PropertyOrDefault<ObjectTypeMap, R, AnyObject>>>
+>(attrs: T, options?: { caseInsensitive: boolean }): FindObjType<T>[]
+declare function filterObjs(predicate: (obj: AnyRoll20Object) => unknown): AnyRoll20Object[]
+declare function getAllObjs(): AnyRoll20Object[]
+declare function getAttrByName(characterId: string, attributeName: string, valueType?: 'current' | 'max'): unknown
+declare function sendChat(speakingAs: string, input: string, cb?: (ops: Roll20Message) => void, options?: { noarchive: boolean, use3d: boolean }): void
+declare function log(item: unknown): void
+declare function toFront(obj: AnyRoll20Object): void
+declare function toBack(obj: AnyRoll20Object): void
+declare function randomInteger(max: number): number
+declare function playerIsGM(playerId: string): boolean
+declare function setDefaultTokenForCharacter(character: Roll20Object<Character>, token: Roll20Object<Graphic>): void
+declare function spawnFx<T extends string>(x: number, y: number, type: EffectType<T>, pageId?: string): void
+declare function spawnFxBetweenPoints<T extends string>(point1: Point, point2: Point, type: EffectType<T>, pageId: string): void
+declare function spawnFxWithDefinition(x: number, y: number, definitionJSON: CustomFXDefinition, pageId: string): void
+declare function playJukeboxPlaylist(playlistId: string): void
+declare function stopJukeboxPlaylist(): void
+declare function sendPing(left: number, top: number, pageId: string, playerId?: string, moveAll?: boolean, visibleTo?: string | string[]): void
+declare function onSheetWorkerComplete(cb: () => void): void
+
+declare function on(event: 'ready', cb: Function): void
+declare function on(event: 'chat:message', cb: (msg: Roll20Message) => void): void
+declare function on<T extends AddDestroyEvents>(event: T, cb: (obj: Roll20Object<ObjectFromCreateDeleteEvent<T>>) => void): void
+declare function on<T extends AllChangeEvents>(event: T, cb: (obj: Roll20Object<ObjectFromChangeEvent<T>>, prev: Readonly<ObjectFromChangeEvent<T>>) => void): void
+
+declare interface Path {
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "path"
+    /**
+     * ID of the page the object is in. Read-only.
+     */
+    readonly _pageid: string
+    /**
+     * A JSON string describing the lines in the path. Read-only, except when creating a new path. See the section on Paths for more information.
+     */
+    readonly _path: string
+    /**
+     * Fill color. Use the string "transparent" or a hex color as a string, for example "#000000"
+     */
+    fill: string
+    /**
+     * Stroke (border) color.
+     */
+    stroke: string
+    /**
+     * Rotation (in degrees).
+     */
+    rotation: number
+    /**
+     * Current layer, one of "gmlayer", "objects", "map", or "walls". The walls layer is used for dynamic lighting, and paths on the walls layer will block light.
+     */
+    layer: string
+    /**
+     *  
+     */
+    stroke_width: number
+    /**
+     *  
+     */
+    width: number
+    /**
+     *  
+     */
+    height: number
+    /**
+     * Y-coordinate for the center of the path
+     */
+    top: number
+    /**
+     * X-coordinate for the center of the path
+     */
+    left: number
+    /**
+     *  
+     */
+    scaleX: number
+    /**
+     *  
+     */
+    scaleY: number
+    /**
+     * Comma-delimited list of player IDs who can control the path. Controlling players may delete the path. If the path was created by a player, that player is automatically included in the list.
+     * All Players is represented by having 'all' in the list.
+     */
+    controlledby: string
 }
 
-interface PageChildObjectCreationProperties {
-    _pageid: string;
+declare interface Roll20Text {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "text"
+    /**
+     * ID of the page the object is in. Read-only.
+     */
+    readonly _pageid: string
+    /**
+     *  
+     */
+    top: number
+    /**
+     *  
+     */
+    left: number
+    /**
+     *  
+     */
+    width: number
+    /**
+     *  
+     */
+    height: number
+    /**
+     *  
+     */
+    text: string
+    /**
+     * For best results, stick to the preset sizes in the editing menu: 8, 10, 12, 14, 16, 18, 20, 22, 26, 32, 40, 56, 72, 100, 200, 300.
+     */
+    font_size: number
+    /**
+     *  
+     */
+    rotation: number
+    /**
+     *  
+     */
+    color: string
+    /**
+     * If this is not set, when later changing the value of the "text" property the font_size will shrink to 8. Possible values (Case is not important): "Arial", "Patrick Hand", "Contrail One", "Shadows Into Light", and "Candal". Specifying an invalid name results in an unnamed, monospaced serif font being used.
+     */
+    font_family: string
+    /**
+     * "gmlayer", "objects", "map", or "walls".
+     */
+    layer: string
+    /**
+     * Comma-delimited list of player IDs who can control the text. Controlling players may delete the text. If the text was created by a player, that player is automatically included in the list.
+     * All Players is represented by having 'all' in the list.
+     */
+    controlledby: string
 }
 
-interface CharacterChildObjectCreationProperties {
-    _characterid: string;
+declare interface Graphic {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "graphic"
+    /**
+     * May be "token" (for tokens and maps) or "card" (for cards). Read-only.
+     */
+    readonly _subtype: string
+    /**
+     * Set to an ID if the graphic is a card. Read-only.
+     */
+    readonly _cardid: string
+    /**
+     * ID of the page the object is in. Read-only.
+     */
+    readonly _pageid: string
+    /**
+     * The URL of the graphic's image. See the note about imgsrc and avatar restrictions below.
+     */
+    imgsrc?: string
+    /**
+     * Set to an ID if Bar 1 is linked to a character.
+     */
+    bar1_link?: string
+    /**
+     *  
+     */
+    bar2_link?: string
+    /**
+     *  
+     */
+    bar3_link?: string
+    /**
+     * ID of the character this token represents.
+     */
+    represents?: string
+    /**
+     * Number of pixels from the left edge of the map to the center of the graphic.
+     */
+    left: number
+    /**
+     * Number of pixels from the top edge of the map to the center of the graphic.
+     */
+    top: number
+    /**
+     * Width of the graphic, in pixels.
+     */
+    width: number
+    /**
+     * Height of the graphic, in pixels.
+     */
+    height: number
+    /**
+     * The orientation of the token in degrees.
+     */
+    rotation: number
+    /**
+     * "gmlayer", "objects", "map", or "walls".
+     */
+    layer: string
+    /**
+     * This property is changed from the Advanced context menu.
+     */
+    isdrawing: boolean
+    /**
+     * Flip vertically.
+     */
+    flipv: boolean
+    /**
+     * Flip horizontally.
+     */
+    fliph: boolean
+    /**
+     * The token's name.
+     */
+    name: string
+    /**
+     * Notes on the token only visible to the GM.
+     */
+    gmnotes: string
+    /**
+     * Comma-delimited list of player IDs who can control the graphic. Controlling players may delete the graphic. If the graphic was created by a player, that player is automatically included in the list.
+     * All Players is represented by having 'all' in the list.
+     */
+    controlledby: string
+    /**
+     * Current value of Bar 1. This may be a number or text.
+     */
+    bar1_value: string | number
+    /**
+     *  
+     */
+    bar2_value: string | number
+    /**
+     *  
+     */
+    bar3_value: string | number
+    /**
+     * Maximum value of Bar 1. If _value and _max are both set, a bar may be displayed above the token showing the percentage of Bar 1.
+     */
+    bar1_max: string | number
+    /**
+     *  
+     */
+    bar2_max: string | number
+    /**
+     *  
+     */
+    bar3_max: string | number
+    /**
+     * Radius of the aura, using the units set in the page's settings. May be an integer or a float. Set to the empty string to clear the aura.
+     */
+    aura1_radius: string | number
+    /**
+     *  
+     */
+    aura2_radius: string | number
+    /**
+     * A hexadecimal color or the aura.
+     */
+    aura1_color: string
+    /**
+     *  
+     */
+    aura2_color: string
+    /**
+     * Is the aura a circle or a square?
+     */
+    aura1_square: boolean
+    /**
+     *  
+     */
+    aura2_square: boolean
+    /**
+     * Hexadecimal color, or "transparent". Will tint the color of the graphic.
+     */
+    tint_color: string
+    /**
+     * A comma-delimited list of currently active statusmarkers. See the notes below for more information.
+     */
+    statusmarkers: string
+    /**
+     * A stringified JSON array containing an object for each token marker currently in the game:. You can find an example below.
+     */
+    token_markers: string
+    /**
+     * Whether the token's nameplate is shown.
+     */
+    showname: boolean
+    /**
+     * Show the nameplate to all players.
+     */
+    showplayers_name: boolean
+    /**
+     * Show Bar 1 to all players.
+     */
+    showplayers_bar1: boolean
+    /**
+     *  
+     */
+    showplayers_bar2: boolean
+    /**
+     *  
+     */
+    showplayers_bar3: boolean
+    /**
+     * Show Aura 1 to all players.
+     */
+    showplayers_aura1: boolean
+    /**
+     *  
+     */
+    showplayers_aura2: boolean
+    /**
+     * Allow controlling players to edit the token's name. Also shows the nameplate to controlling players, even if showplayers_name is false.
+     */
+    playersedit_name: boolean
+    /**
+     * Allow controlling players to edit the token's Bar 1. Also shows Bar 1 to controlling players, even if showplayers_bar1 is false.
+     */
+    playersedit_bar1: boolean
+    /**
+     *  
+     */
+    playersedit_bar2: boolean
+    /**
+     *  
+     */
+    playersedit_bar3: boolean
+    /**
+     * Allow controlling players to edit the token's Aura 1. Also shows Aura 1 to controlling players, even if showplayers_aura1 is false.
+     */
+    playersedit_aura1: boolean
+    /**
+     *  
+     */
+    playersedit_aura2: boolean
+    /**
+     * Dynamic lighting radius.
+     */
+    light_radius: string | number
+    /**
+     * Start of dim light radius. If light_dimradius is the empty string, the token will emit bright light out to the light_radius distance. If light_dimradius has a value, the token will emit bright light out to the light_dimradius value, and dim light from there to the light_radius value.
+     */
+    light_dimradius: string | number
+    /**
+     * Show the token's light to all players.
+     */
+    light_otherplayers: boolean
+    /**
+     * The light has "sight" for controlling players for the purposes of the "Enforce Line of Sight" setting.
+     */
+    light_hassight: boolean
+    /**
+     * Angle (in degrees) of the light's angle. For example, "180" means the light would show only for the front "half" of the "field of vision".
+     */
+    light_angle: string | number
+    /**
+     * Angle (in degrees) of the field of vision of the graphic (assuming that light_hassight is set to true)
+     */
+    light_losangle: string | number
+    /**
+     * The last move of the token. It's a comma-delimited list of coordinates. For example, "300,400" would mean that the token started its last move at left=300, top=400. It's always assumed that the current top + left values of the token are the "ending point" of the last move. Waypoints are indicated by multiple sets of coordinates. For example, "300,400,350,450,400,500" would indicate that the token started at left=300, top=400, then set a waypoint at left=350, top=450, another waypoint at left=400, top=500, and then finished the move at its current top + left coordinates.
+     */
+    lastmove: string
+    /**
+     * Multiplier on the effectiveness of light sources. A multiplier of two would allow the token to see twice as far as a token with a multiplier of one, with the same light source.
+     */
+    light_multiplier: string | number
+    /**
+     * The radius around a token where Advanced Fog of War is revealed.
+     */
+    adv_fow_view_distance: string | number
 }
 
-interface MacroChildObjectCreationProperties {
-    _playerid: string;
+declare interface Page {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "page"
+    /**
+     * Comma-delimited list of IDs specifying the ordering of objects on the page. toFront and toBack (and their associated context menu items) can re-order this list. Read-only.
+     */
+    readonly _zorder: string
+    /**
+     * Page's title.
+     */
+    name: string
+    /**
+     * Show the grid on the map.
+     */
+    showgrid: boolean
+    /**
+     * Show fog of war on the map.
+     */
+    showdarkness: boolean
+    /**
+     * Use dynamic lighting.
+     */
+    showlighting: boolean
+    /**
+     * Width in units.
+     */
+    width: number
+    /**
+     * Height in units.
+     */
+    height: number
+    /**
+     * Size of a grid space in units.
+     */
+    snapping_increment: number
+    /**
+     * Opacity of the grid lines.
+     */
+    grid_opacity: number
+    /**
+     * Opacity of the fog of war for the GM.
+     */
+    fog_opacity: number
+    /**
+     * Hexadecimal color of the map background.
+     */
+    background_color: string
+    /**
+     * Hexadecimal color of the grid lines.
+     */
+    gridcolor: string
+    /**
+     * One of "square", "hex", or "hexr". (hex corresponds to Hex(V), and hexr corresponds to Hex(H))
+     */
+    grid_type: string
+    /**
+     * The distance of one unit.
+     */
+    scale_number: number
+    /**
+     * The type of units to use for the scale.
+     */
+    scale_units: string
+    /**
+     * Show grid labels for hexagonal grid.
+     */
+    gridlabels: boolean
+    /**
+     * One of "foure", "pythagorean" (Euclidean), "threefive", or "manhattan".
+     */
+    diagonaltype: string
+    /**
+     * Whether the page has been put into archive storage.
+     */
+    archived: boolean
+    /**
+     * Only update Dynamic Lighting when an object is dropped.
+     */
+    lightupdatedrop: boolean
+    /**
+     * Enforce Line of Sight for objects.
+     */
+    lightenforcelos: boolean
+    /**
+     * Don't allow objects that have sight to move through Dynamic Lighting walls.
+     */
+    lightrestrictmove: boolean
+    /**
+     * If true anywhere a token can "see" it is assumed there is bright light present.
+     */
+    lightglobalillum: boolean
 }
 
-type TextCreationProperties = PageChildObjectCreationProperties & Partial<TextMutableSynchronousGetProperties>;
-type GraphicCreationProperties = PageChildObjectCreationProperties & Partial<GraphicMutableSynchronousGetProperties>;
-type CharacterCreationProperties = Partial<CharacterMutableSynchronousGetProperties & CharacterMutableAsynchronousGetProperties>;
-type AttributeCreationProperties = CharacterChildObjectCreationProperties & Partial<AttributeMutableSynchronousGetProperties>;
-type AbilityCreationProperties = CharacterChildObjectCreationProperties & Partial<AbilityMutableSynchronousGetProperties>;
-type HandoutCreationProperties = Partial<HandoutMutableSynchronousGetProperties>;
-type MacroCreationProperties = MacroChildObjectCreationProperties & Partial<MacroMutableSynchronousGetProperties>;
-
-/**
- * Creates a new Roll20 object.
- * 
- * @param type The type of Roll20 object to create. Only 'graphic', 'text', 'path', 'character', 'ability', 'attribute', 'handout', 'rollabletable', 'tableitem', and 'macro' may be created.
- * @param properties The initial values to use for the Roll20 object's properties.
- */
-declare function createObj(type: "text", properties: TextCreationProperties): Text | undefined;
-declare function createObj(type: "graphic", properties: GraphicCreationProperties): Graphic | undefined;
-declare function createObj(type: "character", properties: CharacterCreationProperties): Character | undefined;
-declare function createObj(type: "attribute", properties: AttributeCreationProperties): Attribute | undefined;
-declare function createObj(type: "ability", properties: AbilityCreationProperties): Ability | undefined;
-declare function createObj(type: "handout", properties: HandoutCreationProperties): Handout | undefined;
-declare function createObj(type: "macro", properties: MacroCreationProperties): Macro | undefined;
-
-/**
- * Gets all Roll20 objects with properties that match a given set of properties.
- * 
- * @param properties A collection of key:value pairs to match with Roll20 objects in the campaign.
- * @param options If options.caseInsensitive is true, string comparisons between Roll20 objects and properties will be case-insensitive.
- */
-declare function findObjs(properties: { [property: string]: any }, options?: FindObjectOptions): Roll20Object[];
-
-/**
- * Will execute the provided callback funtion on each object, and if the callback returns true, the object will be included in the result array.
- */
-declare function filterObjs(callback: (obj: Roll20Object) => boolean): Roll20Object[];
-
-/**
- * Returns an array of all the objects in the Game (all types). Equivalent to calling filterObjs and just returning true for every object.
- */
-declare function getAllObjs(): Roll20Object[];
-
-/**
- * Gets a specific Roll20 object.
- * 
- * @param type The type of Roll20 object to get.
- * @param id The unique id for the Roll20 object to get.
- */
-declare function getObj(type: "text", id: string): Text | undefined;
-declare function getObj(type: "graphic", id: string): Graphic | undefined;
-declare function getObj(type: "character", id: string): Character | undefined;
-declare function getObj(type: "attribute", id: string): Attribute | undefined;
-declare function getObj(type: "ability", id: string): Ability | undefined;
-declare function getObj(type: "player", id: string): Player | undefined;
-declare function getObj(type: "macro", id: string): Macro | undefined;
-declare function getObj(type: "page", id: string): Page | undefined;
-
-/**
- * Gets the value of an attribute, using the default value from the character sheet if the attribute is not present. value_type is an optional parameter, which you can use to specify "current" or "max".
- * 
- * getAttrByName will only get the value of the attribute, not the attribute object itself. If you wish to reference properties of the attribute other than "current" or "max", or if you wish to change properties of the attribute, you must use one of the other functions above, such as findObjs.
- */
-declare function getAttrByName(character_id: string, attribute_name: string, value_type?: "current" | "max"): string;
-
-/**
- * Logs a message to the API console.
- * 
- * @param message The message to post to the API console. The message parameter will be transformed into a String with JSON.stringify.
- */
-declare function log(message: any): void;
-
-/**
- * Registers an event handler.
- * 
- * @param event There are five types of event:
- * 
- * * ready
- * * change
- * * add
- * * destroy
- * * chat
- * 
- * With the exception of ready, all event types must also be paired with an object type. For chat, this is always message. For everything else, this is the type property of a Roll20 object. In addition to the object type, change events can also optionally specify a property of the specified Roll20 object to watch.
- * 
- * The 2-3 parts of the event (type, object, and optionally property) are separated by colons. So, valid event strings include but are not limited to "ready", "chat:message", "change:graphic", "change:campaign:playerpageid", "add:character", and "destroy:handout".
- * @param callback The function that will be called when the specified event fires. The parameters passed depend on the event type:
- * 
- * * ready events have no callback parameters.
- * * change events have an obj parameter, which is a reference to the Roll20 object as it exists after the change, and a prev parameter, which is a plain old JavaScript object with properties matching the Roll20 object prior to the change event.
- * * add events have an obj parameter, which is a reference to the new Roll20 object.
- * * destroy events have an obj parameter, which is a reference to the no-longer existing Roll20 object.
- * * chat events have a msg parameter, which contains the details of the message that was sent to the chat.
- */
-declare function on(event: "ready", callback: () => void): void;
-declare function on(event: "add:graphic", callback: (obj: Graphic) => void): void;
-declare function on(event: "chat:message", callback: (msg: ChatEventData) => void): void;
-declare function on(event: "change:page", callback: (obj: Page, prev: PageImmutableSynchronousGetProperties & PageMutableSynchronousGetProperties) => void): void;
-declare function on(event: "change:graphic", callback: (obj: Graphic, prev: GraphicImmutableSynchronousGetProperties & GraphicMutableSynchronousGetProperties) => void): void;
-declare function on(event: "change:character", callback: (obj: Character, prev: CharacterImmutableSynchronousGetProperties & CharacterMutableSynchronousGetProperties) => void): void;
-declare function on(event: "change:attribute", callback: (obj: Attribute, prev: AttributeImmutableSynchronousGetProperties & AttributeMutableSynchronousGetProperties) => void): void;
-declare function on(event: "change:campaign:playerpageid", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
-declare function on(event: "change:campaign:turnorder", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
-declare function on(event: "destroy:graphic", callback: (obj: Graphic) => void): void;
-
-/**
- * Sends a chat message.
- * 
- * @param speakingAs The name to attach to the message being sent. If speakingAs is in the format player|player_id or character|character_id, the message will be sent as that player or character. Otherwise, the message will use the given name as though a GM had used the /as command.
- * @param message The message to send to the chat.
- * @param callback If callback is specified, the result of the chat message will be passed to it instead of appearing in the chat. The parameter of the callback method is an array of message objects.
- * @param options If options.noarchive is true, the message will not be added to the chat archive. If options.use3d is true, dice rolls in the message will use the 3D dice feature. Options are not applicable if callback is specified.
- */
-declare function sendChat(speakingAs: string, message: string, callback?: (operations: ChatEventData[]) => void, options?: ChatMessageHandlingOptions): void;
-
-/**
- * Returns the Campaign object. Since there is only one campaign, this global always points to the only campaign in the game.
- */
-declare function Campaign(): Campaign;
-
-/**
- * Returns true if the referenced player is a GM, else false.
- * @param playerID The ID of a player.
- */
-declare function playerIsGM(playerID: string): boolean;
-
-declare function randomInteger(max: number): number;
-
-
-
-interface HandoutImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
-    readonly _type: "handout";
+declare interface CampaignObject {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object — however, note that there is only one Campaign object, and it can be accessed via Campaign(). Read-only.
+     */
+    readonly _type: "campaign"
+    /**
+     * A JSON string of the turn order. See below.
+     */
+    turnorder: string
+    /**
+     * ID of the page used for the tracker when the turn order window is open. When set to false, the turn order window closes.
+     */
+    initiativepage: boolean
+    /**
+     * ID of the page the player bookmark is set to. Players see this page by default, unless overridden by playerspecificpages below.
+     */
+    playerpageid: boolean
+    /**
+     * An object (NOT JSON STRING) of the format: {"player1_id": "page_id", "player2_id": "page_id" ... } Any player set to a page in this object will override the playerpageid.
+     */
+    playerspecificpages: boolean
+    /**
+     * A JSON string which contains data about the folder structure of the game. Read-only.
+     */
+    readonly _journalfolder: string
+    /**
+     * A JSON string which contains data about the jukebox playlist structure of the game. Read-only.
+     */
+    readonly _jukeboxfolder: string
 }
 
-interface HandoutMutableSynchronousGetProperties {
+declare interface Player {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "player"
+    /**
+     * User ID — site-wide. For example, the player's user page on the wiki is /User:ID, where ID is the same value stored in _d20userid. Read-only.
+     */
+    readonly _d20userid: string
+    /**
+     * The player's current display name. May be changed from the user's settings page. Read-only.
+     */
+    readonly _displayname: string
+    /**
+     * Read-only.
+     */
+    readonly _online: boolean
+    /**
+     * The page id of the last page the player viewed as a GM. This property is not updated for players or GMs that have joined as players. Read-only.
+     */
+    readonly _lastpage: string
+    /**
+     * Comma-delimited string of the macros in the player's macro bar. Read-only.
+     */
+    readonly _macrobar: string
+    /**
+     * The player or character ID of who the player has selected from the "As" dropdown. When set to the empty string, the player is speaking as him- or herself. When set to a character, the value is "character|ID", where ID is the character's ID. When the GM is speaking as another player, the value is "player|ID", where ID is the player's ID.
+     */
+    speakingas: string
+    /**
+     * The color of the square by the player's name, as well as the color of their measurements on the map, their ping circles, etc.
+     */
+    color: string
+    /**
+     * Whether the player's macro bar is showing.
+     */
+    showmacrobar: boolean
+}
+
+declare interface Macro {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "macro"
+    /**
+     * The ID of the player that created this macro. Read-only.
+     */
+    readonly _playerid: string
+    /**
+     * The macro's name.
+     */
+    name: string
+    /**
+     * The text of the macro.
+     */
+    action: string
+    /**
+     * Comma-delimited list of player IDs who may view the macro in addition to the player that created it.
+     * All Players is represented by having 'all' in the list.
+     */
+    visibleto: string
+    /**
+     * Is this macro a token action that should show up when tokens are selected?
+     */
+    istokenaction: boolean
+}
+
+declare interface RollableTable {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "rollabletable"
+    /**
+     *  
+     */
+    name: string
+    /**
+     *  
+     */
+    showplayers: boolean
+}
+
+declare interface TableItem {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "tableitem"
+    /**
+     * ID of the table this item belongs to. Read-only.
+     */
+    readonly _rollabletableid: string
+    /**
+     * URL to an image used for the table item. See the note about avatar and imgsrc restrictions below.
+     */
+    avatar: string
+    /**
+     *  
+     */
+    name: string
+    /**
+     * Weight of the table item compared to the other items in the same table. Simply put, an item with weight 3 is three times more likely to be selected when rolling on the table than an item with weight 1.
+     */
+    weight: number
+}
+
+declare interface Character {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "character"
+    /**
+     * URL to an image used for the character. See the note about avatar and imgsrc restrictions below.
+     */
+    avatar: string
+    /**
+     *  
+     */
+    name: string
+    /**
+     * The character's biography. See the note below about accessing the Notes, GMNotes, and bio fields.
+     */
+    bio: string
+    /**
+     * Notes on the character only viewable by the GM. See the note below about accessing the Notes, GMNotes, and bio fields.
+     */
+    gmnotes: string
+    /**
+     *  
+     */
+    archived: boolean
+    /**
+     * Comma-delimited list of player ID who can view this character. Use "all" to give all players the ability to view.
+     * All Players is represented by having 'all' in the list.
+     */
+    inplayerjournals: string
+    /**
+     * Comma-delimited list of player IDs who can control and edit this character. Use "all" to give all players the ability to edit.
+     * All Players is represented by having 'all' in the list.
+     */
+    controlledby: string
+    /**
+     * A JSON string that contains the data for the Character's default token if one is set. Note that this is a "blob" similar to "bio" and "notes", so you must pass a callback function to get(). Read-only.
+     */
+    readonly _defaulttoken: string
+}
+
+declare interface Attribute {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "attribute"
+    /**
+     * ID of the character this attribute belongs to. Read-only. Mandatory when using createObj.
+     */
+    readonly _characterid: string
+    /**
+     *  
+     */
+    name: string
+    /**
+     * The current value of the attribute can be accessed in chat and macros with the syntax @{Character Name|Attribute Name} or in abilities with the syntax @{Attribute Name}.
+     */
+    current: string | number
+    /**
+     * The max value of the attribute can be accessed in chat and macros with the syntax @{Character Name|Attribute Name|max} or in abilities with the syntax @{Attribute Name|max}.
+     */
+    max: string | number
+}
+
+declare interface Ability {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "ability"
+    /**
+     * The character this ability belongs to. Read-only. Mandatory when using createObj.
+     */
+    readonly _characterid: string
+    /**
+     *  
+     */
+    name: string
+    /**
+     * The description does not appear in the character sheet  interface.
+     */
+    description: string
+    /**
+     * The text of the ability.
+     */
+    action: string
+    /**
+     * Is this ability a token action that should show up when tokens linked to its parent Character are selected?
+     */
+    istokenaction: boolean
+}
+
+declare interface Handout {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "handout"
     /**
      * URL to an image used for the handout. See the note about avatar and imgsrc restrictions below.
      */
-    avatar: string;
-    /** 
-     * The name of the handout.
+    avatar: string
+    /**
+     *  
      */
-    name: string;
-    /** 
+    name: string
+    /**
      * Contains the text in the handout. See the note below about using Notes and GMNotes.
      */
-    notes: string;
+    notes: string
     /**
-     * Contains the text in the handout that only the GM sees. See the note below about using Notes and GMNotes. 
+     * Contains the text in the handout that only the GM sees. See the note below about using Notes and GMNotes.
      */
-    gmnotes: string;
+    gmnotes: string
     /**
      * Comma-delimited list of player ID who can see this handout. Use "all" to display to all players.
-     * All Players is represented by having 'all' in the list.
+     * All Players is represented by having 'all' in the list.
      */
-    inplayerjournals: string;
+    inplayerjournals: string
     /**
-     * true id archived, otherwise false.
+     *  
      */
-    archived: boolean;
+    archived: boolean
     /**
      * Comma-delimited list of player IDs who can control and edit this handout.
-     * All Players is represented by having 'all' in the list.
+     * All Players is represented by having 'all' in the list.
      */
-    controlledby: string;
+    controlledby: string
 }
 
-interface Handout extends Roll20ObjectBase<HandoutImmutableSynchronousGetProperties, never, HandoutMutableSynchronousGetProperties, never> { }
+declare interface Deck {
+    /**
+     * id of the deck
+     */
+    readonly _id: string
+    /**
+     *  
+     */
+    readonly _type: "deck"
+    /**
+     * name of the deck
+     */
+    name: string
+    /**
+     * a comma-delimited list of cards which are currently in the deck (including those which have been played to the tabletop/hands). Changes when the deck is shuffled.
+     */
+    readonly _currentDeck: string
+    /**
+     * the current index of our place in the deck, 'what card will be drawn next?'
+     */
+    readonly _currentIndex: number
+    /**
+     * show the current card on top of the deck
+     */
+    readonly _currentCardShown: boolean
+    /**
+     * show the deck to the players
+     */
+    showplayers: boolean
+    /**
+     * can players draw cards?
+     */
+    playerscandraw: boolean
+    /**
+     * the 'back' of the cards for this deck
+     */
+    avatar: string
+    /**
+     * show the deck on the gameboard (is the deck currently visible?)
+     */
+    shown: boolean
+    /**
+     * can players see the number of cards in other player's hands?
+     */
+    players_seenumcards: boolean
+    /**
+     * can players see the fronts of cards when looking in other player's hands?
+     */
+    players_seefrontofcards: boolean
+    /**
+     * can the GM see the number of cards in each player's hand?
+     */
+    gm_seenumcards: boolean
+    /**
+     * can the GM see the fronts of cards when looking in each player's hand?
+     */
+    gm_seefrontofcards: boolean
+    /**
+     * are there an 'infinite' number of cards in this deck?
+     */
+    infinitecards: boolean
+    /**
+     * internally used to advance the deck when drawing cards.
+     */
+    readonly _cardSequencer: number
+    /**
+     * how are cards from this deck played to the tabletop? 'faceup' or 'facedown'.
+     */
+    cardsplayed: string
+    /**
+     * what's the default height for cards played to the tabletop?
+     */
+    defaultheight: string
+    /**
+     *  
+     */
+    defaultwidth: string
+    /**
+     * what type of discard pile does this deck have? 'none' = no discard pile, 'choosebacks' = allow players to see backs of cards and choose one, 'choosefronts' = see fronts and choose, 'drawtop' = draw the most recently discarded card, 'drawbottom' = draw the oldest discarded card.
+     */
+    discardpilemode: string
+    /**
+     * what's the current discard pile for this deck? comma-delimited list of cards. These are cards which have been removed from play and will not be put back into the deck on a shuffle until a recall is performed.
+     */
+    readonly _discardPile: string
+}
 
-interface TokenMarkerObject {
+declare interface Card {
     /**
-     * The ID of the marker.
+     * Name of the card
      */
-    id: string;
+    name: string
     /**
-     * Name of the marker.
+     * Front of the card
      */
-    name: string;
+    avatar: string
     /**
-     * Tag of the marker. Must prepend 'status_' to reference from a token.
+     * ID of the deck
      */
-    tag: string;
+    readonly _deckid: string
     /**
-     * The url Roll20 references to view the marker.
+     *  
      */
-    url: string;
+    readonly _type: "card"
+    /**
+     *  
+     */
+    readonly _id: string
+}
+
+declare interface Hand {
+    /**
+     * comma-delimited list of cards currently in the hand. Note that this is no longer read only. Ideally, it should only be adjusted with the card deck functions.
+     */
+    readonly currentHand: string
+    /**
+     *  
+     */
+    readonly _type: "hand"
+    /**
+     * ID of the player to whom the hand belongs
+     */
+    readonly _parentid: string
+    /**
+     *  
+     */
+    readonly _id: string
+    /**
+     * when player opens hand, is the view 'bydeck' or 'bycard'?
+     */
+    currentView: string
+}
+
+declare interface JukeboxTrack {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "jukeboxtrack"
+    /**
+     * Boolean used to determine whether or not the track is playing. Setting this to "true" and softstop to "false" plays a track.
+     */
+    playing: boolean
+    /**
+     * Boolean used to determine whether or not a non-looped track has finished at least once. This must be set to "false" to ensure that a track will play.
+     */
+    softstop: boolean
+    /**
+     * The visible label for the track in the jukebox tab.
+     */
+    title: string
+    /**
+     * The volume level of the track. Note that this must be set to an integer (not a string), or you may break functionality. Values from 0-100 (percentage).
+     */
+    volume: number
+    /**
+     * Should the track be looped? Set to true if so.
+     */
+    loop: boolean
+}
+
+declare interface CustomFX {
+    /**
+     * A unique ID for this object. Globally unique across all objects in this game. Read-only.
+     */
+    readonly _id: string
+    /**
+     * Can be used to identify the object type or search for the object. Read-only.
+     */
+    readonly _type: "custfx"
+    /**
+     * The visible name for the FX in the FX Listing.
+     */
+    name: string
+    /**
+     * Javascript object describing the FX.
+     */
+    definition: CustomFXDefinition
 }

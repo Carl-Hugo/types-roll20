@@ -1,6 +1,6 @@
 {
   "name": "types-roll20",
-  "version": "1.1.2",
+  "version": "3.0.0",
   "description": "Roll20 types definition",
   "repository": {
     "type": "git",
@@ -14,13 +14,18 @@
   "contributors": [
     "Shaangor (https://github.com/Shaangor)",
     "Carl-Hugo Marcotte (https://github.com/Carl-Hugo)",
-    "Layton B (https://github.com/LaytonGB)"
+    "Layton B (https://github.com/LaytonGB)",
+    "Adam D (https://github.com/laquasicinque"
   ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Carl-Hugo/types-roll20/issues"
   },
   "homepage": "https://github.com/Carl-Hugo/types-roll20#readme",
-  "devDependencies": {},
-  "dependencies": {}
+  "peerDependencies": {
+    "typescript": ">= 4.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.1.0-beta"
+  }
 }

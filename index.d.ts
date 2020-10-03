@@ -1,5 +1,3 @@
-import type __ from 'underscore'
-
 declare global {
     // internal types
     type PossiblyReadOnlyProperty<T, S extends string> = PropertyOrDefault<T, S, PropertyOrDefault<T, `_${S}`>>

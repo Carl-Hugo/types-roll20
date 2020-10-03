@@ -22,9 +22,7 @@
     "url": "https://github.com/Carl-Hugo/types-roll20/issues"
   },
   "homepage": "https://github.com/Carl-Hugo/types-roll20#readme",
-  "devDependencies": {
-    "@types/underscore": "^1.10.24",
-    "typescript": "^4.1.0-beta"
-  },
-  "dependencies": { }
+  "peerDependencies": {
+    "typescript": ">= 4.1"
+  }
 }

@@ -599,7 +599,17 @@ declare function playerIsGM(playerID: string): boolean;
 
 declare function randomInteger(max: number): number;
 
+/**
+ * Sends a Graphic to the to the back of its layer.
+ * @param graphic
+ */
+declare function toBack(obj: Graphic): void;
 
+/**
+ * Sends a Graphic to the to the front of its layer.
+ * @param graphic
+ */
+declare function toFront(obj: Graphic): void;
 
 interface HandoutImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
     readonly _type: "handout";

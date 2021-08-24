@@ -91,7 +91,8 @@ interface CampaignImmutableSynchronousGetProperties extends Roll20ObjectBaseProp
 
 interface CampaignMutableSynchronousGetProperties {
     turnorder: string;
-    initiativepage: string;
+    // on set, can be the boolean false to close initiative tracker window
+    initiativepage: string | boolean;
     playerpageid: string;
     playerspecificpages: any; //TODO
 }
@@ -265,6 +266,20 @@ interface GraphicMutableSynchronousGetProperties {
     "status_trophy": boolean | number;
     "status_white-tower": boolean | number;
     "status_yellow": boolean | number;
+
+    // legacy fog of war vision
+    adv_fow_view_distance: string | number;
+
+    // vision due to light source
+    has_bright_light_vision: boolean;
+
+    // modern light model
+    emits_bright_light: boolean;
+    bright_light_distance: number;
+    emits_low_light: boolean;
+    low_light_distance: number;
+    dim_light_opacity: string;
+    lightColor: string;
 }
 
 interface Graphic extends Roll20ObjectBase<GraphicImmutableSynchronousGetProperties, never, GraphicMutableSynchronousGetProperties, never> { }
@@ -575,6 +590,7 @@ declare function on(event: "change:attribute", callback: (obj: Attribute, prev: 
 declare function on(event: "change:campaign:playerpageid", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
 declare function on(event: "change:campaign:turnorder", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
 declare function on(event: "destroy:graphic", callback: (obj: Graphic) => void): void;
+declare function on(event: 'change:handout', callback: (current: Handout, previous: Handout) => void): void;
 
 /**
  * Sends a chat message.

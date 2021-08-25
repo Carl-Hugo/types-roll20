@@ -280,6 +280,18 @@ interface GraphicMutableSynchronousGetProperties {
     low_light_distance: number;
     dim_light_opacity: string;
     lightColor: string;
+
+    // night vision
+    has_night_vision: boolean;
+    night_vision_distance: number;
+
+    // NOTE: dimming effects are encoded as `Dimming_${dimRange/totalRange}`
+    night_vision_effect: "Nocturnal" | string | null;
+    night_vision_tint: string | null;
+
+    // token bar location, null means "above"
+    bar_location: "overlap_top" | "overlap_bottom" | "bottom" | null;
+    compact_bar: "compact" | null;
 }
 
 interface Graphic extends Roll20ObjectBase<GraphicImmutableSynchronousGetProperties, never, GraphicMutableSynchronousGetProperties, never> { }
@@ -314,8 +326,8 @@ interface AttributeImmutableSynchronousGetProperties extends Roll20ObjectBasePro
 
 interface AttributeMutableSynchronousGetProperties {
     name: string;
-    current: string;
-    max: string;
+    current: string|number;
+    max: string|number;
 }
 
 interface Attribute extends Roll20ObjectBase<AttributeImmutableSynchronousGetProperties, never, AttributeMutableSynchronousGetProperties, never> { }

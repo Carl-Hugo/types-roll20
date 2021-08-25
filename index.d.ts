@@ -602,7 +602,7 @@ declare function on(event: "change:attribute", callback: (obj: Attribute, prev: 
 declare function on(event: "change:campaign:playerpageid", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
 declare function on(event: "change:campaign:turnorder", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
 declare function on(event: "destroy:graphic", callback: (obj: Graphic) => void): void;
-declare function on(event: 'change:handout', callback: (current: Handout, previous: Handout) => void): void;
+declare function on(event: 'change:handout', callback: (obj: Handout, prev: HandoutImmutableSynchronousGetProperties & HandoutMutableSynchronousGetProperties) => void): void;
 
 /**
  * Sends a chat message.

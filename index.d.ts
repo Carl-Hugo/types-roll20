@@ -601,6 +601,7 @@ declare function on(event: "change:character", callback: (obj: Character, prev: 
 declare function on(event: "change:attribute", callback: (obj: Attribute, prev: AttributeImmutableSynchronousGetProperties & AttributeMutableSynchronousGetProperties) => void): void;
 declare function on(event: "change:campaign:playerpageid", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
 declare function on(event: "change:campaign:turnorder", callback: (obj: Campaign, prev: CampaignImmutableSynchronousGetProperties & CampaignMutableSynchronousGetProperties) => void): void;
+declare function on(event: "change:player:_online", callback: (obj: Player, prev: PlayerImmutableSynchronousGetProperties & PlayerMutableSynchronousGetProperties) => void): void;
 declare function on(event: "destroy:graphic", callback: (obj: Graphic) => void): void;
 declare function on(event: 'change:handout', callback: (obj: Handout, prev: HandoutImmutableSynchronousGetProperties & HandoutMutableSynchronousGetProperties) => void): void;
 
@@ -627,7 +628,17 @@ declare function playerIsGM(playerID: string): boolean;
 
 declare function randomInteger(max: number): number;
 
+/**
+ * Sends a Graphic to the to the back of its layer.
+ * @param graphic
+ */
+declare function toBack(obj: Graphic): void;
 
+/**
+ * Sends a Graphic to the to the front of its layer.
+ * @param graphic
+ */
+declare function toFront(obj: Graphic): void;
 
 interface HandoutImmutableSynchronousGetProperties extends Roll20ObjectBaseProperties {
     readonly _type: "handout";

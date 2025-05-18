@@ -1,3 +1,7 @@
+# 🗃️ **Archived:** This repo is no longer maintained—I moved to Foundry VTT 🎲 years ago and no longer use Roll20.
+
+---
+
 # types-roll20
 
 Roll20 type definition
